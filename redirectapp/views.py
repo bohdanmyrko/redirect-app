@@ -20,7 +20,7 @@ def clients(request):
         response = requests.get(
             request.POST['url'], verify=False,
             stream=True)
-        return HttpResponse(response.raw.read().decode('cp1251').encode('utf-8'))
+        return HttpResponse(response.raw.read())
 
 
 @csrf_exempt
