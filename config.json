@@ -1,0 +1,9 @@
+{
+  "HOST" : "2.133.94.166",
+  "DATE_FORMAT" : "%Y%m%d%H%M%S",
+  "FILE_DELIMITER" : "<<!>>",
+  "LOGIN" : "navifarm_test",
+  "PASSWORD" : "N@VIfarm",
+  "PORT" : "",
+  "CHARSET" : "utf-8"
+}
