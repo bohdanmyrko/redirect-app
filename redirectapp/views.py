@@ -4,11 +4,30 @@ import requests
 
 
 @csrf_exempt
-def redirect(request):
+def prices(request):
     if request.method == 'POST':
         print(request.POST['url'])
         response = requests.get(
-            'https://online.medservice.kz/viortis/t/service_t.php?city_id=1000&secret=123&type=PRICELIST', verify=False,
+            request.POST['url'], verify=False,
             stream=True)
-        print(response)
+        return HttpResponse(response.raw.read().decode('cp1251').encode('utf-8'))
+
+
+@csrf_exempt
+def clients(request):
+    if request.method == 'POST':
+        print(request.POST['url'])
+        response = requests.get(
+            request.POST['url'], verify=False,
+            stream=True)
+        return HttpResponse(response.raw.read().decode('cp1251').encode('utf-8'))
+
+
+@csrf_exempt
+def bills(request):
+    if request.method == 'POST':
+        print(request.POST['url'])
+        response = requests.post(
+            request.POST['url'],data={'BODY':request.POST['body']} verify=False,
+            stream=True)
         return HttpResponse(response.raw.read().decode('cp1251').encode('utf-8'))
