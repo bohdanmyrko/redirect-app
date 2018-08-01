@@ -1,7 +1,6 @@
 from django.http import HttpResponseRedirect, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
-import requests
-import json
+import requests, json
 
 
 @csrf_exempt
