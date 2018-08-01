@@ -11,7 +11,7 @@ def prices(request):
          #   request.POST['url'], verify=False,
           #  stream=True)
 #return HttpResponse(response.raw.read().decode('cp1251').encode('utf-8'))
-        return HttpResponse(json.dumps())
+        return HttpResponse(json.dumps({space : response}))
 
 
 @csrf_exempt
