@@ -1,5 +1,6 @@
 import binascii
 from django.http import HttpResponseRedirect, HttpResponse
+from django.views.decorators.csrf import csrf_exempt
 from ftplib import FTP
 import datetime
 import json
@@ -45,7 +46,7 @@ def createDateFileDict(ftp, req_date):
         if file_date > request_date:
             dateToFileDict[file_date] = filename
 
-
+@csrf_exempt
 def connectftp(request):
     print(filenames)
     filenames.clear()
@@ -66,4 +67,3 @@ def connectftp(request):
         binary_data = downloadFile(ftp, dateToFileDict.values())
         print(binary_data.hex())
         return HttpResponse(binary_data, content_type='application/x-binary')
-
