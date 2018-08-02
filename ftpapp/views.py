@@ -51,19 +51,19 @@ def connectftp(request):
     filenames.clear()
     dateToFileDict.clear()
     print(filenames)
-    if request.method == 'GET':
+    if request.method == 'POST':
         ftp = FTP('')
-        ftp.connect(config['HOST'])
-        ftp.login(config['LOGIN'], config['PASSWORD'])
+        ftp.connect(request.POST['HOST'])
+        ftp.login(request.POST['LOGIN'], request.POST['PASSWORD'])
         print('Connection!')
 
         result = ftp.retrlines('LIST', addFilename)
 
-        date = request.GET['date']
+        date = request.POST['DATE']
         if '226' in result:
             createDateFileDict(ftp, date)
 
         binary_data = downloadFile(ftp, dateToFileDict.values())
         print(binary_data.hex())
-        return HttpResponse(binascii.hexlify(binary_data), content_type='application/x-binary')
+        return HttpResponse(binary_data, content_type='application/x-binary')
 
