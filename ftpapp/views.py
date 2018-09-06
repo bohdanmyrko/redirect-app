@@ -1,5 +1,5 @@
 import binascii
-from django.http import HttpResponseRedirect, HttpResponse
+from django.http import HttpResponseRedirect, HttpResponse,JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from ftplib import FTP
 import datetime
@@ -20,11 +20,19 @@ class BinaryData:
         self.buffer += data
 
 
-def downloadFile(ftp, filenames):
+def downloadFile(ftp, filenames,charset):
     bd = BinaryData()
     for file in filenames:
         retr = ftp.retrbinary('RETR ' + file, bd.save_data_to_buff, 1024)
-        bd.save_data_to_buff(config['FILE_DELIMITER'].encode(config['CHARSET']))
+        bd.save_data_to_buff(config['FILE_DELIMITER'].encode(charset))
+
+    ftp.quit()
+    return bd.buffer.decode('cp1251').encode('utf-8')
+
+def download_by_name(ftp,filename,charset):
+    bd = BinaryData()
+    retr = ftp.retrbinary('RETR ' + filename, bd.save_data_to_buff, 1024)
+    bd.save_data_to_buff(config['FILE_DELIMITER'].encode(charset))
 
     ftp.quit()
     return bd.buffer.decode('cp1251').encode('utf-8')
@@ -51,19 +59,30 @@ def connectftp(request):
     print(filenames)
     filenames.clear()
     dateToFileDict.clear()
-    print(filenames)
     if request.method == 'POST':
-        ftp = FTP('')
-        ftp.connect(request.POST['HOST'])
-        ftp.login(request.POST['LOGIN'], request.POST['PASSWORD'])
+        date = request.POST.get('DATE','')
+        if not date:
+            return JsonResponse({'status': 422 ,'message': 'DATE param is required'})
+        else:
+            ftp = FTP()
+            ftp.connect(request.POST.get('HOST', config['HOST']), int(request.POST.get('PORT', config['PORT'])))
+            ftp.login(request.POST.get('LOGIN', config['LOGIN']), request.POST.get('PASSWORD', config['PASSWORD']))
+            print('Connection!')
+            result = ftp.retrlines('LIST', addFilename)
+            if '226' in result:
+                createDateFileDict(ftp, date)
+
+            binary_data = downloadFile(ftp, dateToFileDict.values(), request.POST.get('CHARSET',config['CHARSET']))
+            return HttpResponse(binary_data, content_type='application/x-binary')
+
+@csrf_exempt
+def filebyname(request):
+
+    if request.method == 'POST':
+        filename = request.POST.get('FILENAME','')
+        ftp = FTP()
+        ftp.connect(request.POST.get('HOST', config['HOST']))
+        ftp.login(request.POST.get('LOGIN', config['LOGIN']), request.POST.get('PASSWORD', config['PASSWORD']))
         print('Connection!')
-
-        result = ftp.retrlines('LIST', addFilename)
-
-        date = request.POST['DATE']
-        if '226' in result:
-            createDateFileDict(ftp, date)
-
-        binary_data = downloadFile(ftp, dateToFileDict.values())
-        print(binary_data.hex())
+        binary_data = download_by_name(ftp, filename,request.POST.get('CHARSET',config['CHARSET']))
         return HttpResponse(binary_data, content_type='application/x-binary')
