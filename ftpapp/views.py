@@ -85,4 +85,5 @@ def filebyname(request):
         ftp.login(request.POST.get('LOGIN', config['LOGIN']), request.POST.get('PASSWORD', config['PASSWORD']))
         print('Connection!')
         binary_data = download_by_name(ftp, filename,request.POST.get('CHARSET',config['CHARSET']))
-        return HttpResponse(binary_data, content_type='application/x-binary')
+        print('Data has downloaded')
+        return HttpResponse('200', content_type='application/x-binary')
