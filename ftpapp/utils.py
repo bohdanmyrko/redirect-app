@@ -1,0 +1,22 @@
+from ftplib import FTP
+
+
+def connect_ftp(request):
+    ftp = FTP()
+    try:
+        res = ftp.connect(request.POST['HOST'])
+        login = ftp.login(request.POST['LOGIN'], request.POST['PASSWORD'])
+    except Exception as e:
+        return
+    else:
+        print(f'Connection to {ftp.host} success!')
+        return ftp
+
+
+def check_file_curried(filename):
+    def check_file(ftp_file):
+        if ftp_file == filename:
+            return True
+        else:
+            return False
+    return check_file
