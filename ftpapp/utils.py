@@ -4,6 +4,7 @@ from ftplib import FTP
 def connect_ftp(request):
     ftp = FTP()
     try:
+        print('TRYING TO CONNECT')
         res = ftp.connect(request.POST['HOST'])
         print(res)
         login = ftp.login(request.POST['LOGIN'], request.POST['PASSWORD'])
