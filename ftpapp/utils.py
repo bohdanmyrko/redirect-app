@@ -24,5 +24,5 @@ def check_file_curried(filename):
         if ftp_file == filename:
             return True
         else:
-            return False
+            raise FileNotFoundError
     return check_file

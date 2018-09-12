@@ -96,10 +96,11 @@ class FileWNameView(View):
             return HttpResponse('Can`t connect to FTP')
         else:
             filename = request.POST['FILENAME']
-            if ftp_con.retrlines('NLST', utils.check_file_curried(filename)):
+            try:
+                ftp_con.retrlines('NLST', utils.check_file_curried(filename))
                 process_after_response.after_response(ftp_con, filename,request.META['HTTP_AUTHORIZATION'])
                 return HttpResponse('Success')
-            else:
+            except FileNotFoundError:
                 return HttpResponse(f'File {filename} doesn`t exist')
 
 
