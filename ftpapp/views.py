@@ -98,7 +98,6 @@ class FileWNameView(View):
             filename = request.POST['FILENAME']
             if ftp_con.retrlines('NLST', utils.check_file_curried(filename)):
                 process_after_response.after_response(ftp_con, filename,request.META['HTTP_AUTHORIZATION'])
-                ftp_con.quit()
                 return HttpResponse('Success')
             else:
                 return HttpResponse(f'File {filename} doesn`t exist')
@@ -108,10 +107,7 @@ class FileWNameView(View):
 def process_after_response(ftp_con, filename,meta):
     print('After Response')
     sf_url = 'https://epd-vision--turkeyimp.cs89.my.salesforce.com/services/apexrest/stopharm/price/'
-    try:
-        binary_data = download_by_name(ftp_con, filename)
-    finally:
-        ftp_con.quit()
+    binary_data = download_by_name(ftp_con, filename)
 
     decoded_meta = base64.b64decode(meta)
     json_creds = json.loads(decoded_meta)
@@ -125,5 +121,3 @@ def process_after_response(ftp_con, filename,meta):
         print(f'Response status : {response.status_code}')
     else:
         print('Invalid token')
-
-
