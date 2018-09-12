@@ -5,7 +5,9 @@ def connect_ftp(request):
     ftp = FTP()
     try:
         res = ftp.connect(request.POST['HOST'])
+        print(res)
         login = ftp.login(request.POST['LOGIN'], request.POST['PASSWORD'])
+        print(login)
     except Exception as e:
         return
     else:
