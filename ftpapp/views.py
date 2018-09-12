@@ -106,7 +106,7 @@ class FileWNameView(View):
 @after_response.enable
 def process_after_response(ftp_con, filename,meta):
     print('After Response')
-    sf_url = 'https://epd-vision--turkeyimp.cs89.my.salesforce.com/services/apexrest/stopharm/price/'
+    sf_url = 'https://epd-vision--turkeyimp.cs89.my.salesforce.com/services/apexrest/medservice/price/'
     binary_data = download_by_name(ftp_con, filename)
 
     decoded_meta = base64.b64decode(meta)
