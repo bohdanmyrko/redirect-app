@@ -1,4 +1,6 @@
 import requests
+import base64
+
 from ftpapp import auth, utils
 from django.http import HttpResponse, JsonResponse
 from django.utils.decorators import method_decorator
@@ -95,7 +97,7 @@ class FileWNameView(View):
         else:
             filename = request.POST['FILENAME']
             if ftp_con.retrlines('NLST', utils.check_file_curried(filename)):
-                process_after_response.after_response(ftp_con, filename)
+                process_after_response.after_response(ftp_con, filename,request.META['HTTP_AUTHORIZATION'])
                 ftp_con.quit()
                 return HttpResponse('Success')
             else:
@@ -103,7 +105,7 @@ class FileWNameView(View):
 
 
 @after_response.enable
-def process_after_response(ftp_con, filename):
+def process_after_response(ftp_con, filename,meta):
     print('After Response')
     sf_url = 'https://epd-vision--turkeyimp.cs89.my.salesforce.com/services/apexrest/stopharm/price/'
     try:
@@ -111,8 +113,10 @@ def process_after_response(ftp_con, filename):
     finally:
         ftp_con.quit()
 
-    token = auth.get_token_to_sf(**auth.credentials)
-    print(token)
+    decoded_meta = base64.b64decode(meta)
+    json_creds = json.loads(decoded_meta)
+    token = auth.get_token_to_sf(**json_creds)
+
     if token is not None:
         string_data = binary_data.decode('utf-8').replace('\r\n', '')
         headers = {'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'}
@@ -121,7 +125,5 @@ def process_after_response(ftp_con, filename):
         print(f'Response status : {response.status_code}')
     else:
         print('Invalid token')
-
-
 
 

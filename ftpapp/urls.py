@@ -1,5 +1,5 @@
 from django.urls import re_path
-from django.views.generic.base import View
+
 
 from . import views
 
