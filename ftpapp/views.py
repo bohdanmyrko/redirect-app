@@ -96,6 +96,7 @@ class FileWNameView(View):
             return HttpResponse('Can`t connect to FTP', status = 522)
         else:
             filename = request.POST['FILENAME']
+            print('File to download: ' + filename)
             if ftp_con.retrlines('NLST', utils.check_file_curried(filename)):
                 process_after_response.after_response(ftp_con, filename,request.META['HTTP_AUTHORIZATION'])
                 return HttpResponse('Success', status = 200)
