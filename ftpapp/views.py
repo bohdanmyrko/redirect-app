@@ -107,7 +107,7 @@ class FileWNameView(View):
 @after_response.enable
 def process_after_response(ftp_con, filename,meta):
     print('After Response')
-    sf_url = 'https://epd-vision--turkeyimp.cs89.my.salesforce.com/services/apexrest/medservice/price/'
+    #sf_url = 'https://epd-vision--turkeyimp.cs89.my.salesforce.com/services/apexrest/medservice/price/'
     binary_data = download_by_name(ftp_con, filename)
 
     decoded_meta = base64.b64decode(meta)
@@ -118,7 +118,7 @@ def process_after_response(ftp_con, filename,meta):
         string_data = binary_data.decode('utf-8').replace('\r\n', '')
         headers = {'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'}
         data = {'data': string_data, 'city_code': filename.split('.')[0]}
-        response = requests.post(url=sf_url, data=json.dumps(data), headers=headers)
+        response = requests.post(url=json_creds["sf_url"], data=json.dumps(data), headers=headers)
         print(f'Response status : {response.status_code}')
     else:
         print('Invalid token')
