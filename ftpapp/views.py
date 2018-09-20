@@ -118,6 +118,7 @@ def process_after_response(ftp_con, filename,meta):
         string_data = binary_data.decode('utf-8').replace('\r\n', '')
         headers = {'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'}
         data = {'data': string_data, 'city_code': filename.split('.')[0]}
+        print(json_creds["sf_url"])
         response = requests.post(url=json_creds["sf_url"], data=json.dumps(data), headers=headers)
         print(f'Response status : {response.status_code}')
     else:
