@@ -112,12 +112,16 @@ def process_after_response(ftp_con, filename,meta):
 
     decoded_meta = base64.b64decode(meta)
     json_creds = json.loads(decoded_meta)
+    print('******')
+    print(json_creds)
+    print('******')
     token = auth.get_token_to_sf(**json_creds)
 
     if token is not None:
         string_data = binary_data.decode('utf-8').replace('\r\n', '')
         headers = {'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'}
         data = {'data': string_data, 'city_code': filename.split('.')[0]}
+        print('******')
         print(json_creds["sf_url"])
         response = requests.post(url=json_creds["sf_url"], data=json.dumps(data), headers=headers)
         print(f'Response status : {response.status_code}')
