@@ -27,6 +27,7 @@ def clients(request):
 @csrf_exempt
 def bills(request):
     if request.method == 'POST':
+        print(request.POST)
         print(request.POST['body'])
         print(request.POST['url'])
         response = requests.post(
