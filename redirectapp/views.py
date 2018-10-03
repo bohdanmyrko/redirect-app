@@ -31,4 +31,5 @@ def bills(request):
         response = requests.post(
             request.POST['url'],data={'BODY':request.POST['body']}, verify=False,
             stream=True)
-        return HttpResponse(response.raw.read().decode('cp1251').encode('utf-8'))
+        return HttpResponse(response.raw.read())
+            #.decode('cp1251').encode('utf-8'))
