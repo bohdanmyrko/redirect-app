@@ -1,5 +1,6 @@
 {
   "DATE_FORMAT" : "%Y%m%d%H%M%S",
   "FILE_DELIMITER" : "<<!>>",
-  "CHARSET" : "utf-8"
+  "CHARSET" : "utf-8",
+  "PORT" : "21"
 }

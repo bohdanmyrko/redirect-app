@@ -71,8 +71,8 @@ def connectftp(request):
             return JsonResponse({'status': 422, 'message': 'DATE param is required'})
         else:
             ftp = FTP()
-            ftp.connect(request.POST.get('HOST', config['HOST']), int(request.POST.get('PORT', config['PORT'])))
-            ftp.login(request.POST.get('LOGIN', config['LOGIN']), request.POST.get('PASSWORD', config['PASSWORD']))
+            ftp.connect(request.POST['HOST'])
+            ftp.login(request.POST['LOGIN'], request.POST['PASSWORD'])
             print('Connection!')
             result = ftp.retrlines('LIST', add_filename)
             if '226' in result:
