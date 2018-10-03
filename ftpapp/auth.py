@@ -2,7 +2,7 @@ from requests_oauthlib import OAuth2Session
 from oauthlib.oauth2 import LegacyApplicationClient
 
 
-token_url = 'https://login.salesforce.com/services/oauth2/token'
+token_url = 'https://test.salesforce.com/services/oauth2/token'
 
 
 def get_token_to_sf(**kwargs):
