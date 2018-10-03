@@ -28,8 +28,6 @@ def clients(request):
 def bills(request):
     if request.method == 'POST':
         print(request.POST)
-        print(request.POST['body'])
-        print(request.POST['url'])
         response = requests.post(
             request.POST['url'],data={'BODY':request.POST['body']}, verify=False,
             stream=True)
