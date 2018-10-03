@@ -2,7 +2,7 @@ from requests_oauthlib import OAuth2Session
 from oauthlib.oauth2 import LegacyApplicationClient
 
 
-token_url = 'https://test.salesforce.com/services/oauth2/token'
+#token_url = 'https://test.salesforce.com/services/oauth2/token'
 
 
 def get_token_to_sf(**kwargs):
@@ -23,7 +23,7 @@ def get_token_to_sf(**kwargs):
 
 def fetch_sf_token(oauth, **kwargs):
     print(kwargs)
-    token = oauth.fetch_token(token_url=token_url, username=kwargs['username'], password=kwargs['password'],
+    token = oauth.fetch_token(token_url=kwargs['token_url'], username=kwargs['username'], password=kwargs['password'],
                               client_id=kwargs['client_id'],
                               client_secret=kwargs['client_secret'])
     return token['access_token']
