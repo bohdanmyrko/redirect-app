@@ -83,6 +83,7 @@ class FetchData(View):
     @after_response.enable
     def process_response(self, request):
         print('After Response')
+        print(request.headers)
         print('aaa' + request.META['AUTHORIZATION'])
         decoded_meta = base64.b64decode(request.META['HTTP_AUTHORIZATION'])
         print('xxxx')
