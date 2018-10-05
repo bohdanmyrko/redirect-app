@@ -83,7 +83,7 @@ class FetchData(View):
     @after_response.enable
     def process_response(self, request):
         print('After Response')
-        print('aaa' + request.META)
+        print('aaa' + request.META['HTTP_AUTHORIZATION'])
         decoded_meta = base64.b64decode(request.META['HTTP_AUTHORIZATION'])
         print('xxxx')
         binary_data = self.download_by_date(request.POST.get('CHARSET', config['CHARSET']))
