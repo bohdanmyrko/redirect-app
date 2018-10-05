@@ -84,11 +84,15 @@ class FetchData(View):
     def process_response(self, request):
         print('After Response')
         decoded_meta = base64.b64decode(request.META['HTTP_AUTHORIZATION'])
+        print('a')
         json_creds = json.loads(decoded_meta)
+        print('b')
         token = auth.get_token_to_sf(**json_creds)
-
+        print('c')
         if token is not None:
+            print('d')
             self.create_date_file_dict(request.POST['DATE'])
+            print('e')
             binary_data = self.download_by_date(request.POST.get('CHARSET', config['CHARSET']))
             print(binary_data)
             string_data = binary_data.decode('cp1251').encode('utf-8').decode('utf-8')
