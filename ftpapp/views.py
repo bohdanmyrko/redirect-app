@@ -85,7 +85,6 @@ class FetchData(View):
         print('After Response')
         decoded_meta = base64.b64decode(request.META['HTTP_AUTHORIZATION'])
         binary_data = self.download_by_date(request.POST.get('CHARSET', config['CHARSET']))
-        decoded_meta = base64.b64decode(request.META['HTTP_AUTHORIZATION'])
         json_creds = json.loads(decoded_meta)
         token = auth.get_token_to_sf(**json_creds)
         if token is not None:
