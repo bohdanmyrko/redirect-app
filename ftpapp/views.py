@@ -6,16 +6,12 @@ from django.http import HttpResponse, JsonResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.base import View
-from ftplib import FTP
 import datetime
 import json
 import after_response
 
 with open('config.json', 'r') as f:
     config = json.load(f)
-
-filenames = []
-dateToFileDict = {}
 
 
 class BinaryData:
@@ -26,16 +22,6 @@ class BinaryData:
         self.buffer += data
 
 
-def download_by_date(ftp, filenames, charset):
-    bd = BinaryData()
-    for file in filenames:
-        retr = ftp.retrbinary('RETR ' + file, bd.save_data_to_buff, 1024)
-        bd.save_data_to_buff(config['FILE_DELIMITER'].encode(charset))
-
-    ftp.quit()
-    return bd.buffer.decode('cp1251').encode('utf-8')
-
-
 def download_by_name(ftp, filename):
     bd = BinaryData()
     retr = ftp.retrbinary('RETR ' + filename, bd.save_data_to_buff, 1024)
@@ -43,48 +29,76 @@ def download_by_name(ftp, filename):
     return bd.buffer.decode('cp1251').encode('utf-8')
 
 
-def add_filename(arg):
-    splited_line = arg.split(' ')
-    filename = splited_line[-1]
-    filenames.append(filename)
+@method_decorator(csrf_exempt, name='dispatch')
+class FetchData(View):
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.filenames = []
+        self.dateToFileDict = {}
+        self.ftp_con = None
 
-def create_date_file_dict(ftp, req_date):
-    request_date = datetime.datetime.strptime(req_date, config['DATE_FORMAT'])
-    for filename in filenames:
-        response = ftp.sendcmd('MDTM ' + filename)
-        response = response.split(' ')
-        file_date = datetime.datetime.strptime(response[1], config['DATE_FORMAT'])
-
-        if file_date > request_date:
-            dateToFileDict[file_date] = filename
-
-
-@csrf_exempt
-def connectftp(request):
-    print(filenames)
-    filenames.clear()
-    dateToFileDict.clear()
-    if request.method == 'POST':
+    def post(self, request):
+        print(self.filenames)
         date = request.POST.get('DATE', '')
         if not date:
             return JsonResponse({'status': 422, 'message': 'DATE param is required'})
         else:
-            ftp = FTP()
-            ftp.connect(request.POST['HOST'])
-            ftp.login(request.POST['LOGIN'], request.POST['PASSWORD'])
-            print('Connection!')
-            result = ftp.retrlines('LIST', add_filename)
-            if '226' in result:
-                create_date_file_dict(ftp, date)
+            self.ftp_con = utils.connect_ftp(request)
+            if self.ftp_con is None:
+                return HttpResponse('Can`t connect to FTP', status=522)
+            else:
+                result = self.ftp_con.retrlines('LIST', self.add_filename)
+                if '226' in result:
+                    print('226')
+                    self.process_response.after_response(self, request)
+                    return JsonResponse({'status': 200, 'message': 'Connect to ftp. Start preparing data.'})
 
-            binary_data = download_by_date(ftp, dateToFileDict.values(), request.POST.get('CHARSET', config['CHARSET']))
-            return HttpResponse(binary_data, content_type='application/x-binary')
 
+    def add_filename(self, name_line):
+        splitted_line = name_line.split(' ')
+        filename = splitted_line[-1]
+        self.filenames.append(filename)
 
-@method_decorator(csrf_exempt, name='dispatch')
-class FileByNameView(View):
-    pass
+    def create_date_file_dict(self, req_date):
+        request_date = datetime.datetime.strptime(req_date, config['DATE_FORMAT'])
+        for filename in self.filenames:
+            response = self.ftp_con.sendcmd('MDTM ' + filename)
+            response = response.split(' ')
+            file_date = datetime.datetime.strptime(response[1], config['DATE_FORMAT'])
+
+            if file_date > request_date:
+                self.dateToFileDict[file_date] = filename
+
+    def download_by_date(self, charset):
+        bd = BinaryData()
+        for file in self.filenames:
+            retr = self.ftp_con.retrbinary('RETR ' + file, bd.save_data_to_buff, 1024)
+            bd.save_data_to_buff(config['FILE_DELIMITER'].encode(charset))
+
+        self.ftp_con.quit()
+        # return bd.buffer.decode('cp1251').encode('utf-8')
+        return bd.buffer
+
+    @after_response.enable
+    def process_response(self, request):
+        print('After Response')
+        decoded_meta = base64.b64decode(request.META['HTTP_AUTHORIZATION'])
+        json_creds = json.loads(decoded_meta)
+        token = auth.get_token_to_sf(**json_creds)
+
+        if token is not None:
+            self.create_date_file_dict(request.POST['DATE'])
+            binary_data = self.download_by_date(request.POST.get('CHARSET', config['CHARSET']))
+            print(binary_data)
+            string_data = binary_data.decode('cp1251').encode('utf-8').decode('utf-8')
+            print(string_data)
+            headers = {'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'}
+            # data = {'data': binary_data}json.dumps(data)
+            response = requests.post(url=json_creds["sf_url"], data=string_data, headers=headers)
+            print(f'Response status : {response.status_code}')
+        else:
+            print('Invalid token')
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -93,19 +107,19 @@ class FileWNameView(View):
     def post(self, request, *args, **kwargs):
         ftp_con = utils.connect_ftp(request)
         if ftp_con is None:
-            return HttpResponse('Can`t connect to FTP', status = 522)
+            return HttpResponse('Can`t connect to FTP', status=522)
         else:
             filename = request.POST['FILENAME']
             print('File to download: ' + filename)
             if ftp_con.retrlines('NLST', utils.check_file_curried(filename)):
-                process_after_response.after_response(ftp_con, filename,request.META['HTTP_AUTHORIZATION'])
-                return HttpResponse('Success', status = 200)
+                process_after_response.after_response(ftp_con, filename, request.META['HTTP_AUTHORIZATION'])
+                return HttpResponse('Success', status=200)
             else:
-                return HttpResponse(f'File {filename} doesn`t exist', status = 404)
+                return HttpResponse(f'File {filename} doesn`t exist', status=404)
 
 
 @after_response.enable
-def process_after_response(ftp_con, filename,meta):
+def process_after_response(ftp_con, filename, meta):
     print('After Response')
     binary_data = download_by_name(ftp_con, filename)
 
