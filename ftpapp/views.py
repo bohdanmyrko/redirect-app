@@ -83,50 +83,19 @@ class FetchData(View):
     @after_response.enable
     def process_response(self, request):
         print('After Response')
-        print(request.headers)
-        print('aaa' + request.META['AUTHORIZATION'])
         decoded_meta = base64.b64decode(request.META['HTTP_AUTHORIZATION'])
-        print('xxxx')
         binary_data = self.download_by_date(request.POST.get('CHARSET', config['CHARSET']))
-        print('a')
         decoded_meta = base64.b64decode(request.META['HTTP_AUTHORIZATION'])
-        print('b')
         json_creds = json.loads(decoded_meta)
-        print('c')
         token = auth.get_token_to_sf(**json_creds)
-        print('d')
-
         if token is not None:
-            string_data = binary_data.decode('utf-8')
+            string_data = binary_data.decode('cp1251')
             headers = {'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'}
             data = {'data': string_data}
             response = requests.post(url=json_creds["sf_url"], data=json.dumps(data), headers=headers)
             print(f'Response status : {response.status_code}')
         else:
             print('Invalid token')
-
-
-        # print(request.META['HTTP_AUTHORIZATION'])
-        # decoded_meta = base64.b64decode(request.META['HTTP_AUTHORIZATION'])
-        #
-        # json_creds = json.loads(decoded_meta)
-        #
-        # token = auth.get_token_to_sf(**json_creds)
-        #
-        # if token is not None:
-        #     print('d')
-        #     self.create_date_file_dict(request.POST['DATE'])
-        #     print('e')
-        #     binary_data = self.download_by_date(request.POST.get('CHARSET', config['CHARSET']))
-        #     print(binary_data)
-        #     string_data = binary_data.decode('cp1251').encode('utf-8').decode('utf-8')
-        #     print(string_data)
-        #     headers = {'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'}
-        #     # data = {'data': binary_data}json.dumps(data)
-        #     response = requests.post(url=json_creds["sf_url"], data=string_data, headers=headers)
-        #     print(f'Response status : {response.status_code}')
-        # else:
-        #     print('Invalid token')
 
 
 @method_decorator(csrf_exempt, name='dispatch')
