@@ -23,7 +23,6 @@ def get_token_to_sf(**kwargs):
 
 
 def fetch_sf_token(oauth, **kwargs):
-    logger.debug(f'AUTH KWARGS {kwargs}')
     token = oauth.fetch_token(token_url=kwargs['token_url'], username=kwargs['username'], password=kwargs['password'],
                               client_id=kwargs['client_id'],
                               client_secret=kwargs['client_secret'])
