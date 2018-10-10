@@ -33,6 +33,7 @@ def clients(request):
 def bills(request):
     if request.method == 'POST':
         logger.debug('Bills request')
+        logger.debug(f'BILLS: request: {request.POST}')
         url = request.POST['url']
         body = request.POST['body']
         if url and body:
