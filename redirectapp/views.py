@@ -28,10 +28,13 @@ def clients(request):
 def bills(request):
     if request.method == 'POST':
         print(request.POST)
-        response = requests.post(
-            request.POST['url'],data={'BODY':request.POST['body']}, verify=False,
-            stream=True)
-        print(response.raw.read().decode('utf-8'))
-        print(HttpResponse(response.raw.read()))
-        return HttpResponse(response.raw.read())
+        try:
+            response = requests.post(
+                request.POST['url'],data={'BODY':request.POST['body']}, verify=False,
+                stream=True)
+        except Exception as e:
+            print(e)
+        s = response.raw.read()
+        print(s.decode('utf-8'))
+        return HttpResponse(s)
             #.decode('cp1251').encode('utf-8'))
