@@ -8,7 +8,6 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.base import View
 
-
 logger = logging.getLogger(__name__)
 
 with open('config.json', 'r') as f:
@@ -41,16 +40,12 @@ class StatusesView(View):
             if self.ftp_con is None:
                 return HttpResponse('Can`t connect to FTP', status=522)
             else:
-                result = self.ftp_con.retrlines('LIST', self.add_filename)
-                if '226' in result:
-                    logger.debug(f'STATUSES: Response from ftp: {result}')
+                self.filenames = self.ftp_con.nlst()
+                if self.filenames:
                     self.process_response.after_response(self, request)
                     return JsonResponse({'status': 200, 'message': 'Connect to ftp. Start preparing data.'})
-
-    def add_filename(self, name_line):
-        splitted_line = name_line.split(' ')
-        filename = splitted_line[-1]
-        self.filenames.append(filename)
+                else:
+                    return JsonResponse({'status': 204, 'message': 'No files was found'})
 
     def create_date_file_dict(self, req_date):
         request_date = datetime.datetime.strptime(req_date, config['DATE_FORMAT'])
@@ -64,26 +59,61 @@ class StatusesView(View):
 
     def download_by_date(self, charset):
         bd = BinaryData()
-        for file in self.filenames:
-            self.ftp_con.retrbinary('RETR ' + file, bd.save_data_to_buff, 1024)
-            bd.save_data_to_buff(config['FILE_DELIMITER'].encode(charset))
-
-        self.ftp_con.quit()
+        try:
+            for file in self.dateToFileDict.values():
+                self.ftp_con.retrbinary('RETR ' + file, bd.save_data_to_buff, 1024)
+                bd.save_data_to_buff(config['FILE_DELIMITER'].encode(charset))
+            return bd.buffer
+        finally:
+            self.ftp_con.quit()
         # return bd.buffer.decode('cp1251').encode('utf-8')
-        return bd.buffer
+
+    def prepare_data(self, request):
+        self.create_date_file_dict(request.POST['DATE'])
+        if self.dateToFileDict:
+            binary_data = self.download_by_date(request.POST.get('CHARSET', config['CHARSET']))
+            string_data = binary_data.decode('cp1251')
+            data = {'data': string_data}
+            return data
+        else:
+            logger.info('STATUSES: No files was found')
 
     @after_response.enable
     def process_response(self, request):
         logger.debug('STATUSES: After response process started')
         sf_token, json_creds = utils.process_auth_meta(request.META['HTTP_AUTHORIZATION'])
         if sf_token is not None:
-            binary_data = self.download_by_date(request.POST.get('CHARSET', config['CHARSET']))
-            string_data = binary_data.decode('cp1251')
             headers = {'Authorization': 'Bearer ' + sf_token, 'Content-Type': 'application/json'}
-            data = {'data': string_data}
+            data = self.prepare_data(request)
             utils.make_request_to_sf(json_creds, data, headers)
         else:
             logger.warning('STATUSES: INVALID TOKEN')
+
+
+class StatusWthFilenameView(StatusesView):
+    def prepare_data(self, request):
+        try:
+            self.create_date_file_dict(request.POST['DATE'])
+            if self.dateToFileDict:
+                setattr(self, 'data', dict.fromkeys(list(self.dateToFileDict.values()), ''))
+                for file in self.dateToFileDict.values():
+                    self.ftp_con.retrbinary('RETR ' + file, self.update_dict(file))
+                return self.data
+            else:
+                logger.info('STATUSES: No files was found')
+        except Exception as e:
+            logger.exception('Exception occurred')
+        finally:
+            self.ftp_con.quit()
+
+    def update_dict(self, filename):
+        def func_to_return(file_data):
+            if file_data is None:
+                self.data[filename] = ''
+            else:
+                self.data[filename] = bytes(file_data).decode('utf-8')
+
+        return func_to_return
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -101,7 +131,7 @@ class PricesView(View):
             filename = request.POST['FILENAME']
             logger.info(f'PRICES: File to download: {filename}')
 
-            if self.ftp_con.retrlines('NLST', utils.check_file_curried(filename)):
+            if filename in self.ftp_con.nlst():
                 self.process_after_response.after_response(self, filename, request.META['HTTP_AUTHORIZATION'])
                 return HttpResponse('Success', status=200)
             else:
