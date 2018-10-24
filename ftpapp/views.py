@@ -30,13 +30,16 @@ class StatusesView(View):
         self.filenames = []
         self.dateToFileDict = {}
         self.ftp_con = None
+        self.ensure_ascii = True
 
     def post(self, request):
         date = request.POST.get('DATE', '')
         if not date:
             return JsonResponse({'status': 422, 'message': 'DATE param is required'})
         else:
-            self.ftp_con = utils.connect_ftp(request)
+            self.ftp_con = utils.connect_ftp(request.POST["HOST"],
+                                             request.POST["LOGIN"],
+                                             request.POST["PASSWORD"])
             if self.ftp_con is None:
                 return HttpResponse('Can`t connect to FTP', status=522)
             else:
@@ -85,7 +88,7 @@ class StatusesView(View):
         if sf_token is not None:
             headers = {'Authorization': 'Bearer ' + sf_token, 'Content-Type': 'application/json'}
             data = self.prepare_data(request)
-            utils.make_request_to_sf(json_creds, data, headers)
+            utils.make_request_to_sf(json_creds, data, headers, self.ensure_ascii)
         else:
             logger.warning('STATUSES: INVALID TOKEN')
 
@@ -94,6 +97,7 @@ class StatusWthFilenameView(StatusesView):
     def prepare_data(self, request):
         try:
             self.create_date_file_dict(request.POST['DATE'])
+            self.ensure_ascii = False
             if self.dateToFileDict:
                 setattr(self, 'data', dict.fromkeys(list(self.dateToFileDict.values()), ''))
                 for file in self.dateToFileDict.values():
@@ -115,6 +119,20 @@ class StatusWthFilenameView(StatusesView):
 
         return func_to_return
 
+    def delete(self, request):
+        self.ftp_con = utils.connect_ftp(request.DELETE["HOST"],
+                                         request.DELETE["LOGIN"],
+                                         request.DELETE["PASSWORD"])
+        if self.ftp_con is None:
+            return HttpResponse('Can`t connect to FTP', status=522)
+        else:
+            file_names = request.DELETE['FILENAMES']
+            ftp_files = self.ftp_con.nlst()
+
+            for name in file_names:
+                if name in ftp_files:
+                    print('DELETE')
+
 
 @method_decorator(csrf_exempt, name='dispatch')
 class PricesView(View):
@@ -124,7 +142,9 @@ class PricesView(View):
         self.ftp_con = None
 
     def post(self, request):
-        self.ftp_con = utils.connect_ftp(request)
+        self.ftp_con = utils.connect_ftp(request.POST["HOST"],
+                                         request.POST["LOGIN"],
+                                         request.POST["PASSWORD"])
         if self.ftp_con is None:
             return HttpResponse('Can`t connect to FTP', status=522)
         else:

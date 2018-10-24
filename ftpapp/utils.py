@@ -8,13 +8,13 @@ from ftplib import FTP
 logger = logging.getLogger(__name__)
 
 
-def connect_ftp(request):
+def connect_ftp(host, login, password):
     ftp = FTP()
     try:
-        logger.info(f'TRYING CONNECT TO {request.POST["HOST"]}')
-        hostname, directory = parse_host(request.POST['HOST'])
+        logger.info(f'TRYING CONNECT TO {host}')
+        hostname, directory = parse_host(host)
         ftp.connect(hostname)
-        ftp.login(request.POST['LOGIN'], request.POST['PASSWORD'])
+        ftp.login(login, password)
         if directory is not None:
             logger.info(f'Changing directory to: {directory}')
             ftp.cwd(directory)
@@ -36,13 +36,16 @@ def parse_host(host_param):
         return hostname, directory
 
 
-def make_request_to_sf(json_creds, data, headers):
+def make_request_to_sf(json_creds, data, headers, ensure_ascii):
     try:
-        logger.debug('Try to make request to sf')
-        logger.debug(json_creds["sf_url"])
-        logger.debug(data)
-        logger.debug(json.dumps(data, ensure_ascii=False).encode('utf-8'))
-        response = requests.post(url=json_creds["sf_url"], data=json.dumps(data, ensure_ascii=False).encode('utf-8'), headers=headers)
+        logger.debug('Trying to make request to sf')
+        logger.debug(f'Ensure ascii : {ensure_ascii}')
+
+        data = json.dumps(data)
+        if not ensure_ascii:
+            data = json.dumps(data, ensure_ascii=False).encode('utf-8')
+        response = requests.post(url=json_creds["sf_url"], data=data, headers=headers)
+
     except Exception as e:
         logging.exception("Exception occurred")
     else:
