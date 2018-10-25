@@ -41,10 +41,11 @@ def make_request_to_sf(json_creds, data, headers, ensure_ascii):
         logger.debug('Trying to make request to sf')
         logger.debug(f'Ensure ascii : {ensure_ascii}')
 
-        data = json.dumps(data)
+        json_data = json.dumps(data)
         if not ensure_ascii:
-            data = json.dumps(data, ensure_ascii=False).encode('utf-8')
-        response = requests.post(url=json_creds["sf_url"], data=data, headers=headers)
+            json_data = json.dumps(data, ensure_ascii=False).encode('utf-8')
+
+        response = requests.post(url=json_creds["sf_url"], data=json_data, headers=headers)
 
     except Exception as e:
         logging.exception("Exception occurred")

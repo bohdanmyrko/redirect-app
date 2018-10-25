@@ -1,4 +1,7 @@
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class HttpDeleteMiddleware:
@@ -6,11 +9,11 @@ class HttpDeleteMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        print(request)
         if request.method.lower() == 'delete':
+            logger.info('Entering HTTP DELETE middleware')
             request_body = request.body.decode('utf-8')
             body = json.loads(request_body)
             request.DELETE = body
-            print(request.DELETE)
+
         response = self.get_response(request)
         return response

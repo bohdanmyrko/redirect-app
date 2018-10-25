@@ -128,10 +128,11 @@ class StatusWthFilenameView(StatusesView):
         else:
             file_names = request.DELETE['FILENAMES']
             ftp_files = self.ftp_con.nlst()
-
+            logger.info(f'Files to delete: {file_names}')
             for name in file_names:
                 if name in ftp_files:
-                    print('DELETE')
+                    self.ftp_con.delete(name)
+            return HttpResponse(f'Files {file_names} successfully deleted',status=200)
 
 
 @method_decorator(csrf_exempt, name='dispatch')
