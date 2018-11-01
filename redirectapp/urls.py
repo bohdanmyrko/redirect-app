@@ -8,4 +8,5 @@ urlpatterns = [
     re_path(r'clients$', views.clients, name='clients'),
     re_path(r'bills$', views.bills, name='bills'),
     # re_path(r'prices$', views.prices, name = 'prices'),
+    # some comment
 ]
