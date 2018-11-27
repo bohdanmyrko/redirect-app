@@ -4,7 +4,7 @@ import logging
 from django.http import HttpResponseRedirect, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from ftpapp import utils
-import google-api-python-client
+
 
 logger = logging.getLogger(__name__)
 
@@ -45,16 +45,6 @@ def bills(request):
             logger.warning('BILLS: invalid post params')
             return HttpResponse('Invalid post params', 400)
 
-
-@csrf_exempt
-def images(request):
-    file_metadata = {'name': 'photo.jpg'}
-    media = MediaFileUpload('files/photo.jpg',
-                        mimetype='image/jpeg')
-    file = drive_service.files().create(body=file_metadata,
-                                    media_body=media,
-                                    fields='id').execute()
-    # print 'File ID: %s' % file.get('id')
 
 @after_response.enable
 def process_after_response(url, body, orderid, auth_header, ):
