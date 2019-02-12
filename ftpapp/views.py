@@ -115,7 +115,7 @@ class StatusWthFilenameView(StatusesView):
             if file_data is None:
                 self.data[filename] = ''
             else:
-                self.data[filename] = bytes(file_data).decode('utf-8')
+                self.data[filename] += bytes(file_data).decode('utf-8')
                 print(self.data[filename])
 
         return func_to_return
